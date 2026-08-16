@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Droplet, MapPin, Calendar, Clock, Coins, Sparkles, Truck, ShieldCheck, CheckCircle2, Plus, Minus, Tag } from 'lucide-react';
+import { X, Droplet, MapPin, Calendar, Clock, Coins, Truck, Plus, Minus, ArrowRight } from 'lucide-react';
 import { CosmeticBottle, RefillOrder } from '../types';
 
 interface RefillModalProps {
@@ -17,7 +17,7 @@ const PRESET_ADDRESSES = [
 
 export const RefillModal: React.FC<RefillModalProps> = ({
   bottle,
-  userPoints,
+  userPoints = 0,
   onClose,
   onSubmit,
 }) => {
@@ -37,12 +37,14 @@ export const RefillModal: React.FC<RefillModalProps> = ({
   const [preferredDate, setPreferredDate] = useState(defaultDateStr);
   const [deliveryMemo, setDeliveryMemo] = useState('문 앞에 안전하게 놓아주세요. (친환경 종이 포장재)');
 
-  // Calculation
-  const unitPrice = bottle.refillPrice || 15000;
+  const originalPrice = bottle?.originalPrice ?? 0;
+  const unitPrice = bottle?.refillPrice || Math.round(originalPrice * 0.70);
+  const refillRewardPoints = bottle?.refillPoints ?? Math.round((bottle?.pickupPoints ?? 0) * 0.10);
+
   const totalPrice = quantity * unitPrice;
   const maxUsablePoints = Math.min(userPoints, totalPrice);
   const finalPaidAmount = Math.max(0, totalPrice - usePoints);
-  const totalEarnedPoints = quantity * bottle.refillPoints;
+  const totalEarnedPoints = quantity * refillRewardPoints;
 
   const handleUseAllPoints = () => {
     setUsePoints(maxUsablePoints);
@@ -74,78 +76,75 @@ export const RefillModal: React.FC<RefillModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs overflow-y-auto">
       <div 
         id="refill-modal-container"
-        className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-teal-100 overflow-hidden my-8 animate-fadeIn"
+        className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-[#E5E5E0] overflow-hidden my-8 animate-fadeIn"
       >
         
         {/* Header */}
-        <div className="relative bg-gradient-to-r from-teal-800 to-cyan-900 text-white p-6">
+        <div className="relative bg-[#121214] text-[#F8F8F6] p-6 sm:p-8 border-b border-black/10">
           <button
             id="close-refill-modal-btn"
             onClick={onClose}
-            className="absolute top-5 right-5 p-2 text-white/80 hover:text-white rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+            className="absolute top-5 right-5 p-2 text-white/70 hover:text-white rounded-full bg-white/10 hover:bg-white/20 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
 
-          <div className="flex items-center gap-2 text-teal-300 text-xs font-bold uppercase tracking-wider mb-1">
-            <Droplet className="w-4 h-4 text-cyan-300" />
-            <span>친환경 리필팩 맞춤 주문 & 배송</span>
+          <div className="flex items-center gap-1.5 text-[#EAF854] text-[11px] font-mono-code uppercase tracking-wider mb-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#EAF854]" />
+            <span>ECO REFILL POUCH ORDER</span>
           </div>
 
-          <h2 className="text-2xl font-black tracking-tight text-white">
-            리필팩 신청 및 배송 정보 입력
+          <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-white font-display">
+            친환경 리필팩 주문 및 배송 신청
           </h2>
-          <p className="text-teal-100 text-xs mt-1">
-            플라스틱 용기 쓰레기 80% 절감! 본품보다 최대 50% 저렴하게 리필액을 배송받으세요.
+          <p className="text-[#A0A0A5] text-xs sm:text-sm mt-1 leading-relaxed">
+            플라스틱 용기 쓰레기 80% 절감! 정가 대비 최대 50% 절약된 금액으로 리필 원액을 배송받으세요.
           </p>
         </div>
 
-        {/* Matching Refill Product Banner */}
-        <div className="p-5 bg-teal-50/60 border-b border-teal-100 flex items-center gap-4">
+        {/* Selected Bottle Summary Strip */}
+        <div className="p-5 bg-[#FBFBF9] border-b border-[#E5E5E0] flex items-center gap-4">
           <img
             src={bottle.imageUrl}
             alt={bottle.name}
             referrerPolicy="no-referrer"
-            className="w-16 h-16 rounded-xl object-cover border border-teal-200 shadow-xs shrink-0"
+            className="w-16 h-16 rounded-2xl object-cover border border-[#E5E5E0] shadow-2xs shrink-0 bg-white"
           />
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold px-2 py-0.5 rounded bg-teal-200 text-teal-900">
-                {bottle.brand} 리필팩
+            <div className="flex items-center gap-2 flex-wrap font-mono-code">
+              <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#121214] text-white uppercase">
+                {bottle.brand} REFILL
               </span>
-              <span className="text-xs text-amber-700 font-bold bg-amber-100 px-2 py-0.5 rounded">
-                정가 대비 {Math.round(((bottle.originalPrice - bottle.refillPrice) / bottle.originalPrice) * 100)}% 절약
+              <span className="text-xs text-[#121214] bg-[#EAF854] px-2.5 py-0.5 rounded-full font-bold">
+                SAVE {originalPrice > 0 ? Math.round(((originalPrice - unitPrice) / originalPrice) * 100) : 30}%
               </span>
             </div>
-            <div className="text-sm font-bold text-slate-900 truncate mt-0.5">
+            <div className="text-sm sm:text-base font-bold text-[#121214] truncate mt-1">
               {bottle.refillName || `${bottle.name} 친환경 리필팩`}
             </div>
-            <div className="flex items-center gap-3 text-xs mt-0.5">
-              <span className="text-slate-500 line-through">정가 {bottle.originalPrice.toLocaleString()}원</span>
-              <span className="text-sm font-extrabold text-teal-700">{unitPrice.toLocaleString()}원</span>
-              <span className="text-emerald-700 font-bold">+{bottle.refillPoints.toLocaleString()}P 적립</span>
+            <div className="flex items-center gap-3 text-xs mt-0.5 font-mono-code">
+              <span className="text-[#88888D] line-through">{originalPrice.toLocaleString()}원</span>
+              <span className="text-sm font-bold text-[#121214]">{unitPrice.toLocaleString()}원</span>
+              <span className="text-[#737378]">+{refillRewardPoints.toLocaleString()}P 적립</span>
             </div>
           </div>
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+        <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6 max-h-[70vh] overflow-y-auto">
           
           {/* Section 1: Quantity Selection */}
           <div className="space-y-3">
-            <label className="text-sm font-bold text-slate-900 flex items-center justify-between">
-              <span className="flex items-center gap-1.5">
-                <Droplet className="w-4 h-4 text-teal-600" />
-                <span>1. 리필팩 신청 수량</span>
-              </span>
-              <span className="text-xs text-slate-500 font-normal">필요한 수량을 선택하세요</span>
+            <label className="text-xs font-mono-code font-bold uppercase tracking-wider text-[#737378] flex items-center justify-between">
+              <span>01. REFILL QUANTITY</span>
+              <span className="text-[10px] lowercase text-[#88888D]">최대 10개 신청 가능</span>
             </label>
 
-            <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-200">
-              <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-xl border border-slate-300 shadow-xs">
+            <div className="flex items-center gap-4 p-4 rounded-2xl bg-[#F7F7F4] border border-[#E5E5E0]">
+              <div className="flex items-center gap-3 bg-white px-3 py-1.5 rounded-full border border-[#E5E5E0] shadow-2xs">
                 <button
                   type="button"
                   onClick={() => {
@@ -153,26 +152,26 @@ export const RefillModal: React.FC<RefillModalProps> = ({
                     setQuantity(nextQ);
                     setUsePoints(Math.min(usePoints, nextQ * unitPrice));
                   }}
-                  className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-teal-100 text-slate-700 flex items-center justify-center font-bold transition-colors"
+                  className="w-7 h-7 rounded-full bg-[#F0F0EB] hover:bg-[#E2ECE5] text-[#121214] flex items-center justify-center font-bold transition-colors cursor-pointer"
                 >
-                  <Minus className="w-4 h-4" />
+                  <Minus className="w-3.5 h-3.5" />
                 </button>
-                <span className="w-8 text-center text-lg font-black text-slate-900">{quantity}개</span>
+                <span className="w-8 text-center text-base font-extrabold text-[#121214] font-mono-code">{quantity}</span>
                 <button
                   type="button"
                   onClick={() => {
                     const nextQ = Math.min(10, quantity + 1);
                     setQuantity(nextQ);
                   }}
-                  className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-teal-100 text-slate-700 flex items-center justify-center font-bold transition-colors"
+                  className="w-7 h-7 rounded-full bg-[#F0F0EB] hover:bg-[#E2ECE5] text-[#121214] flex items-center justify-center font-bold transition-colors cursor-pointer"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-3.5 h-3.5" />
                 </button>
               </div>
 
-              <div className="flex-1 text-right">
-                <div className="text-xs text-slate-500">리필팩 상품 금액</div>
-                <div className="text-lg font-black text-slate-900">
+              <div className="flex-1 text-right font-mono-code">
+                <div className="text-xs text-[#737378]">리필 상품 금액:</div>
+                <div className="text-lg font-extrabold text-[#121214]">
                   {totalPrice.toLocaleString()}원
                 </div>
               </div>
@@ -180,63 +179,62 @@ export const RefillModal: React.FC<RefillModalProps> = ({
           </div>
 
           {/* Section 2: Point Redemption */}
-          <div className="space-y-3 p-4 rounded-2xl bg-amber-50/70 border border-amber-200">
+          <div className="space-y-3 p-5 rounded-2xl bg-white border border-[#E5E5E0]">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-amber-950 flex items-center gap-1.5">
-                <Coins className="w-4 h-4 text-amber-600" />
-                <span>2. 포인트 사용하여 할인받기</span>
+              <label className="text-xs font-mono-code font-bold uppercase tracking-wider text-[#737378] flex items-center gap-1.5">
+                <Coins className="w-3.5 h-3.5 text-[#121214]" />
+                <span>02. POINT DISCOUNT</span>
               </label>
-              <span className="text-xs font-semibold text-slate-600">
-                내 보유 포인트: <strong className="text-amber-700 font-extrabold">{userPoints.toLocaleString()}P</strong>
+              <span className="text-xs font-mono-code text-[#737378]">
+                BALANCE: <strong className="text-[#121214] font-bold">{userPoints.toLocaleString()}P</strong>
               </span>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
               <div className="relative flex-1">
                 <input
-                  id="refill-points-input"
                   type="number"
-                  min="0"
+                  min={0}
                   max={maxUsablePoints}
                   value={usePoints || ''}
                   onChange={(e) => {
-                    const val = Number(e.target.value) || 0;
+                    const val = parseInt(e.target.value) || 0;
                     setUsePoints(Math.min(val, maxUsablePoints));
                   }}
                   placeholder="사용할 포인트 입력"
-                  className="w-full py-2.5 px-3 text-sm font-bold bg-white border border-amber-300 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none pr-8"
+                  className="w-full py-2.5 px-3 text-xs font-bold bg-[#FBFBF9] border border-[#E5E5E0] rounded-xl focus:ring-1 focus:ring-[#121214] outline-none pr-8 font-mono-code"
                 />
-                <span className="absolute right-3 top-2.5 text-xs font-bold text-amber-700">P</span>
+                <span className="absolute right-3 top-2.5 text-xs font-bold text-[#121214] font-mono-code">P</span>
               </div>
 
               <button
                 type="button"
                 onClick={handleUseAllPoints}
-                className="px-4 py-2 text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white rounded-xl shadow-xs transition-colors shrink-0"
+                className="px-4 py-2 text-xs font-bold font-mono-code bg-[#121214] hover:bg-[#2A2A2E] text-white rounded-xl shadow-2xs transition-colors shrink-0 cursor-pointer"
               >
                 전액 사용
               </button>
             </div>
-            <div className="text-[11px] text-amber-800">
-              * 공병 회수로 적립된 포인트를 1P = 1원으로 현금처럼 전액 사용하실 수 있습니다.
+
+            <div className="text-[11px] text-[#88888D] font-mono-code">
+              * 보유 중인 에코 포인트는 1P = 1원으로 현금처럼 사용하실 수 있습니다.
             </div>
           </div>
 
           {/* Section 3: Delivery Address */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                <MapPin className="w-4 h-4 text-teal-600" />
-                <span>3. 리필팩을 받을 주소</span>
+              <label className="text-xs font-mono-code font-bold uppercase tracking-wider text-[#737378] flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5 text-[#121214]" />
+                <span>03. DELIVERY ADDRESS</span>
               </label>
-              <div className="text-[11px] text-teal-700 font-semibold flex items-center gap-1">
-                <Truck className="w-3.5 h-3.5" /> 친환경 무료 배송
+              <div className="text-[10px] font-mono-code text-[#121214] font-bold flex items-center gap-1">
+                <Truck className="w-3.5 h-3.5" /> FREE SHIPPING
               </div>
             </div>
 
-            {/* Quick Presets */}
             <div className="flex flex-wrap gap-1.5 text-xs">
-              <span className="text-[11px] text-slate-400 py-1 font-medium">빠른 주소 예시:</span>
+              <span className="text-[11px] font-mono-code text-[#88888D] py-1">PRESETS:</span>
               {PRESET_ADDRESSES.map((preset, idx) => (
                 <button
                   key={idx}
@@ -246,9 +244,9 @@ export const RefillModal: React.FC<RefillModalProps> = ({
                     setDetailAddress(preset.detail);
                     setZipCode(preset.zip);
                   }}
-                  className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-teal-100 text-slate-700 hover:text-teal-900 text-[11px] font-medium transition-colors"
+                  className="px-2.5 py-1 rounded-full bg-[#F7F7F4] hover:bg-[#EBEBE8] text-[#121214] text-[11px] font-mono-code transition-colors cursor-pointer border border-[#E5E5E0]"
                 >
-                  예시 {idx + 1} ({preset.road.split(' ')[1]})
+                  {preset.road.split(' ')[1]}
                 </button>
               ))}
             </div>
@@ -261,7 +259,7 @@ export const RefillModal: React.FC<RefillModalProps> = ({
                   value={zipCode}
                   onChange={(e) => setZipCode(e.target.value)}
                   placeholder="우편번호"
-                  className="w-28 py-2 px-3 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:bg-white outline-none"
+                  className="w-28 py-2 px-3 text-xs bg-[#FBFBF9] border border-[#E5E5E0] rounded-xl focus:ring-1 focus:ring-[#121214] focus:bg-white outline-none font-mono-code"
                 />
                 <input
                   id="refill-road-address"
@@ -269,7 +267,7 @@ export const RefillModal: React.FC<RefillModalProps> = ({
                   value={roadAddress}
                   onChange={(e) => setRoadAddress(e.target.value)}
                   placeholder="기본 주소 (도로명 또는 지번)"
-                  className="flex-1 py-2 px-3 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:bg-white outline-none"
+                  className="flex-1 py-2 px-3 text-xs bg-[#FBFBF9] border border-[#E5E5E0] rounded-xl focus:ring-1 focus:ring-[#121214] focus:bg-white outline-none"
                   required
                 />
               </div>
@@ -280,7 +278,7 @@ export const RefillModal: React.FC<RefillModalProps> = ({
                 value={detailAddress}
                 onChange={(e) => setDetailAddress(e.target.value)}
                 placeholder="상세 주소 (동/호수, 층수 등)"
-                className="w-full py-2 px-3 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:bg-white outline-none"
+                className="w-full py-2 px-3 text-xs bg-[#FBFBF9] border border-[#E5E5E0] rounded-xl focus:ring-1 focus:ring-[#121214] focus:bg-white outline-none"
               />
             </div>
           </div>
@@ -288,24 +286,24 @@ export const RefillModal: React.FC<RefillModalProps> = ({
           {/* Section 4: Preferred Date & Delivery Instructions */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                <Calendar className="w-4 h-4 text-teal-600" />
-                <span>배송 희망 날짜</span>
+              <label className="text-xs font-mono-code font-bold uppercase tracking-wider text-[#737378] flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-[#121214]" />
+                <span>PREFERRED DATE</span>
               </label>
               <input
                 id="refill-preferred-date"
                 type="date"
                 value={preferredDate}
                 onChange={(e) => setPreferredDate(e.target.value)}
-                className="w-full py-2.5 px-3 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:bg-white outline-none font-medium"
+                className="w-full py-2.5 px-3 text-xs bg-[#FBFBF9] border border-[#E5E5E0] rounded-xl focus:ring-1 focus:ring-[#121214] focus:bg-white outline-none font-mono-code"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                <Clock className="w-4 h-4 text-teal-600" />
-                <span>배송 메모 / 요청사항</span>
+              <label className="text-xs font-mono-code font-bold uppercase tracking-wider text-[#737378] flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-[#121214]" />
+                <span>DELIVERY MEMO</span>
               </label>
               <input
                 id="refill-delivery-memo"
@@ -313,53 +311,50 @@ export const RefillModal: React.FC<RefillModalProps> = ({
                 value={deliveryMemo}
                 onChange={(e) => setDeliveryMemo(e.target.value)}
                 placeholder="예: 문 앞 보관, 부재 시 연락"
-                className="w-full py-2.5 px-3 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:bg-white outline-none font-medium"
+                className="w-full py-2.5 px-3 text-xs bg-[#FBFBF9] border border-[#E5E5E0] rounded-xl focus:ring-1 focus:ring-[#121214] focus:bg-white outline-none"
               />
             </div>
           </div>
 
-          {/* Payment & Benefit Calculation Breakdown */}
-          <div className="p-4 rounded-2xl bg-gradient-to-r from-teal-50 via-cyan-50 to-emerald-50 border border-teal-200 space-y-2 text-xs">
-            <div className="flex justify-between text-slate-600">
-              <span>상품 금액 ({quantity}개)</span>
-              <span>{totalPrice.toLocaleString()}원</span>
+          {/* Payment Breakdown */}
+          <div className="p-5 rounded-2xl bg-[#F7F7F4] border border-[#E5E5E0] space-y-2 text-xs font-mono-code">
+            <div className="flex justify-between text-[#737378]">
+              <span>SUBTOTAL ({quantity} PCS)</span>
+              <span className="text-[#121214] font-bold">{totalPrice.toLocaleString()} KRW</span>
             </div>
             {usePoints > 0 && (
-              <div className="flex justify-between text-amber-700 font-semibold">
-                <span>포인트 할인</span>
-                <span>-{usePoints.toLocaleString()}P</span>
+              <div className="flex justify-between text-[#121214] font-bold">
+                <span>POINTS APPLIED</span>
+                <span>-{usePoints.toLocaleString()} P</span>
               </div>
             )}
-            <div className="flex justify-between text-slate-600">
-              <span>배송비</span>
-              <span className="text-teal-700 font-bold">무료배송 (0원)</span>
+            <div className="flex justify-between text-[#737378]">
+              <span>SHIPPING FEE</span>
+              <span className="text-[#121214] font-bold">0 KRW (FREE)</span>
             </div>
 
-            <div className="flex items-center justify-between pt-2 border-t border-teal-200/80">
-              <span className="text-sm font-black text-slate-900">최종 결제 금액</span>
-              <span className="text-xl font-black text-teal-800">
-                {finalPaidAmount.toLocaleString()}원
+            <div className="flex items-center justify-between pt-2 border-t border-[#E5E5E0]">
+              <span className="text-xs font-bold text-[#121214]">TOTAL PAYMENT</span>
+              <span className="text-xl font-extrabold text-[#121214]">
+                {finalPaidAmount.toLocaleString()} KRW
               </span>
             </div>
 
-            {/* Extra reward note */}
-            <div className="flex items-center justify-between text-[11px] pt-1 text-emerald-800 font-bold bg-white/70 p-2 rounded-lg">
-              <span className="flex items-center gap-1">
-                <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-                리필팩 구매 시 추가 적립 예정 포인트:
-              </span>
-              <span>+{totalEarnedPoints.toLocaleString()}P</span>
+            <div className="flex items-center justify-between text-[11px] pt-2 text-[#121214] font-bold">
+              <span>ESTIMATED REWARD:</span>
+              <span className="bg-[#EAF854] px-2 py-0.5 rounded-full">+{totalEarnedPoints.toLocaleString()} P</span>
             </div>
           </div>
 
-          {/* Submit Button */}
+          {/* Submit CTA */}
           <button
             id="submit-refill-request-btn"
             type="submit"
-            className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-teal-600 to-cyan-700 hover:from-teal-700 hover:to-cyan-800 active:scale-99 text-white font-black text-base shadow-lg shadow-teal-700/30 flex items-center justify-center gap-2 transition-all cursor-pointer"
+            className="w-full py-4 px-6 rounded-full bg-[#121214] hover:bg-[#2A2A2E] text-white font-bold text-sm shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer font-mono-code"
           >
-            <Truck className="w-5 h-5" />
-            <span>리필팩 신청 완료 및 친환경 배송 요청하기</span>
+            <Truck className="w-4 h-4 text-[#EAF854]" />
+            <span>SUBMIT REFILL ORDER (FREE SHIPPING)</span>
+            <ArrowRight className="w-4 h-4 text-[#EAF854]" />
           </button>
 
         </form>

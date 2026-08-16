@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle2, Sparkles, X, Coins } from 'lucide-react';
+import { Sparkles, X, Coins } from 'lucide-react';
 
 interface ToastProps {
   message: string;
@@ -10,24 +10,24 @@ interface ToastProps {
 export const Toast: React.FC<ToastProps> = ({ message, points, onClose }) => {
   return (
     <div className="fixed bottom-6 right-6 z-50 animate-bounce-short">
-      <div className="flex items-center gap-3 bg-slate-900 text-white px-5 py-4 rounded-2xl shadow-2xl border border-emerald-500/40">
-        <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-400 flex items-center justify-center text-emerald-400">
-          <Sparkles className="w-5 h-5 animate-spin" />
+      <div className="flex items-center gap-3 bg-[#121214] text-white px-5 py-4 rounded-2xl shadow-2xl border border-white/10 font-mono-code">
+        <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-[#EAF854]">
+          <Sparkles className="w-4 h-4 animate-spin-slow" />
         </div>
 
         <div>
-          <div className="text-xs font-bold text-slate-200">{message}</div>
+          <div className="text-xs font-bold text-white font-sans">{message}</div>
           {points !== undefined && (
-            <div className="text-sm font-extrabold text-amber-400 flex items-center gap-1 mt-0.5">
-              <Coins className="w-4 h-4 text-amber-300" />
-              <span>+{points.toLocaleString()}P 적립 완료!</span>
+            <div className="text-xs font-extrabold text-[#EAF854] flex items-center gap-1 mt-0.5">
+              <Coins className="w-3.5 h-3.5 text-[#EAF854]" />
+              <span>+{(points ?? 0).toLocaleString()} P CREDITED</span>
             </div>
           )}
         </div>
 
         <button
           onClick={onClose}
-          className="ml-2 p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+          className="ml-2 p-1 text-[#A0A0A5] hover:text-white rounded-full hover:bg-white/10 transition-colors cursor-pointer"
         >
           <X className="w-4 h-4" />
         </button>

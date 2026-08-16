@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Sparkles, PlusCircle, CheckCircle, RefreshCw, Upload, Image as ImageIcon } from 'lucide-react';
+import { X, PlusCircle } from 'lucide-react';
 import { CosmeticBottle, BottleMaterial } from '../types';
 
 interface CustomBottleModalProps {
@@ -16,7 +16,7 @@ export const CustomBottleModal: React.FC<CustomBottleModalProps> = ({
   const [category, setCategory] = useState<CosmeticBottle['category']>('세럼/앰플');
   const [capacity, setCapacity] = useState('50ml');
   const [material, setMaterial] = useState<BottleMaterial>('Glass');
-  const [imageUrl, setImageUrl] = useState('https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=800&q=80');
+  const [imageUrl] = useState('https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=800&q=80');
 
   const calculateCustomPoints = (mat: BottleMaterial): number => {
     switch (mat) {
@@ -63,51 +63,51 @@ export const CustomBottleModal: React.FC<CustomBottleModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm overflow-y-auto">
-      <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-emerald-100 overflow-hidden animate-fadeIn p-6 space-y-5">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs overflow-y-auto">
+      <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-[#E5E5E0] overflow-hidden animate-fadeIn p-6 sm:p-7 space-y-5">
         
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-          <div className="flex items-center gap-2 text-emerald-700">
+        <div className="flex items-center justify-between border-b border-[#E5E5E0] pb-4">
+          <div className="flex items-center gap-2 text-[#121214]">
             <PlusCircle className="w-5 h-5" />
-            <h3 className="text-lg font-black text-slate-900">미등록 공병 직접 등록 & 회수</h3>
+            <h3 className="text-lg font-extrabold text-[#121214] font-display">미등록 공병 직접 등록 & 회수</h3>
           </div>
-          <button onClick={onClose} className="p-1.5 text-slate-400 hover:text-slate-700 rounded-full hover:bg-slate-100">
+          <button onClick={onClose} className="p-1.5 text-[#737378] hover:text-[#121214] rounded-full hover:bg-[#F7F7F4] cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+        <form onSubmit={handleSubmit} className="space-y-4 text-xs font-mono-code">
           <div>
-            <label className="font-bold text-slate-700 block mb-1">화장품 브랜드</label>
+            <label className="font-bold text-[#121214] block mb-1 uppercase tracking-wider">BRAND NAME</label>
             <input
               type="text"
               value={brand}
               onChange={(e) => setBrand(e.target.value)}
               placeholder="예: 탬버린즈, 바이레도, 아이소이 등"
-              className="w-full py-2.5 px-3 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none font-medium"
+              className="w-full py-2.5 px-3 bg-[#FBFBF9] border border-[#E5E5E0] rounded-xl focus:ring-1 focus:ring-[#121214] focus:bg-white outline-none font-sans"
               required
             />
           </div>
 
           <div>
-            <label className="font-bold text-slate-700 block mb-1">화장품 제품명</label>
+            <label className="font-bold text-[#121214] block mb-1 uppercase tracking-wider">PRODUCT NAME</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="예: 불가리안 로즈 블레미쉬 케어 세럼"
-              className="w-full py-2.5 px-3 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none font-medium"
+              className="w-full py-2.5 px-3 bg-[#FBFBF9] border border-[#E5E5E0] rounded-xl focus:ring-1 focus:ring-[#121214] focus:bg-white outline-none font-sans"
               required
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="font-bold text-slate-700 block mb-1">카테고리</label>
+              <label className="font-bold text-[#121214] block mb-1 uppercase tracking-wider">CATEGORY</label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value as CosmeticBottle['category'])}
-                className="w-full py-2.5 px-3 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
+                className="w-full py-2.5 px-3 bg-[#FBFBF9] border border-[#E5E5E0] rounded-xl focus:ring-1 focus:ring-[#121214] outline-none font-sans"
               >
                 <option value="스킨/토너">스킨/토너</option>
                 <option value="세럼/앰플">세럼/앰플</option>
@@ -119,47 +119,47 @@ export const CustomBottleModal: React.FC<CustomBottleModalProps> = ({
             </div>
 
             <div>
-              <label className="font-bold text-slate-700 block mb-1">용기 용량</label>
+              <label className="font-bold text-[#121214] block mb-1 uppercase tracking-wider">CAPACITY</label>
               <input
                 type="text"
                 value={capacity}
                 onChange={(e) => setCapacity(e.target.value)}
                 placeholder="예: 50ml, 150ml"
-                className="w-full py-2.5 px-3 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
+                className="w-full py-2.5 px-3 bg-[#FBFBF9] border border-[#E5E5E0] rounded-xl focus:ring-1 focus:ring-[#121214] outline-none"
               />
             </div>
           </div>
 
           <div>
-            <label className="font-bold text-slate-700 block mb-1">용기 재질 (소재)</label>
+            <label className="font-bold text-[#121214] block mb-1 uppercase tracking-wider">BOTTLE MATERIAL</label>
             <div className="grid grid-cols-3 gap-2">
               {(['Glass', 'PET', 'PP', 'Aluminum', 'PE Tube', 'Complex / Other'] as BottleMaterial[]).map((mat) => (
                 <button
                   key={mat}
                   type="button"
                   onClick={() => setMaterial(mat)}
-                  className={`py-2 px-2 rounded-xl text-xs font-semibold border transition-all ${
+                  className={`py-2 px-2 rounded-xl text-[11px] font-bold border transition-all cursor-pointer ${
                     material === mat
-                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
-                      : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                      ? 'bg-[#121214] text-[#EAF854] border-black shadow-2xs'
+                      : 'bg-[#F7F7F4] text-[#737378] border-[#E5E5E0] hover:bg-[#EBEBE8]'
                   }`}
                 >
-                  {mat === 'Glass' ? '유리 (1,800P)' : mat === 'PET' ? '투명 PET (1,000P)' : mat === 'PP' ? 'PP 플라스틱 (1,100P)' : mat === 'Aluminum' ? '알루미늄 (1,400P)' : mat === 'PE Tube' ? '튜브 (900P)' : '기타 (800P)'}
+                  {mat === 'Glass' ? '유리 (1,800P)' : mat === 'PET' ? 'PET (1,000P)' : mat === 'PP' ? 'PP (1,100P)' : mat === 'Aluminum' ? '알루미늄 (1,400P)' : mat === 'PE Tube' ? '튜브 (900P)' : '기타 (800P)'}
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-between">
-            <span className="font-bold text-slate-800">예상 공병 수거 포인트:</span>
-            <span className="text-lg font-black text-emerald-700">+{estimatedPoints.toLocaleString()}P</span>
+          <div className="p-4 rounded-2xl bg-[#F7F7F4] border border-[#E5E5E0] flex items-center justify-between">
+            <span className="font-bold text-[#737378]">ESTIMATED REWARD:</span>
+            <span className="text-lg font-extrabold text-[#121214]">+{estimatedPoints.toLocaleString()} P</span>
           </div>
 
           <button
             type="submit"
-            className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl shadow-md transition-all cursor-pointer"
+            className="w-full py-3.5 bg-[#121214] hover:bg-[#2A2A2E] text-white font-bold text-xs rounded-full shadow-2xs transition-all cursor-pointer"
           >
-            공병 등록하고 회수 신청하기
+            REGISTER & PROCEED TO RECYCLE
           </button>
         </form>
 

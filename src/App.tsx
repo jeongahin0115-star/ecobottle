@@ -24,7 +24,7 @@ import { ShopView } from './components/ShopView';
 import { EcoGuideView } from './components/EcoGuideView';
 import { CustomBottleModal } from './components/CustomBottleModal';
 import { Toast } from './components/Toast';
-import { Leaf, RefreshCw, Sparkles, CheckCircle2, ShoppingBag, ArrowRight, ShieldCheck, Heart } from 'lucide-react';
+import { Leaf, RefreshCw, Sparkles, ShoppingBag, ArrowRight, ShieldCheck } from 'lucide-react';
 
 const INITIAL_USER_STATS: UserEcoStats = {
   points: 2500,
@@ -146,39 +146,59 @@ export default function App() {
 
   // Bottle Catalogue & Shop
   const [bottles, setBottles] = useState<CosmeticBottle[]>(() => {
-    const saved = localStorage.getItem('ecobottle_catalogue');
-    return saved ? JSON.parse(saved) : COSMETIC_BOTTLES;
+    try {
+      const saved = localStorage.getItem('ecobottle_catalogue');
+      return saved ? JSON.parse(saved) : COSMETIC_BOTTLES;
+    } catch {
+      return COSMETIC_BOTTLES;
+    }
   });
 
   // User Stats & Histories
   const [userStats, setUserStats] = useState<UserEcoStats>(() => {
-    const saved = localStorage.getItem('ecobottle_user_stats');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      const tier = getUserTierDetails(parsed.totalBottlesRecycled || 0);
-      return {
-        ...parsed,
-        ecoTierId: tier.currentTier.id,
-        bonusRatePercent: tier.currentTier.bonusRatePercent,
-        ecoLevel: tier.currentTier.name,
-      };
+    try {
+      const saved = localStorage.getItem('ecobottle_user_stats');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const tier = getUserTierDetails(parsed.totalBottlesRecycled || 0);
+        return {
+          ...parsed,
+          ecoTierId: tier.currentTier.id,
+          bonusRatePercent: tier.currentTier.bonusRatePercent,
+          ecoLevel: tier.currentTier.name,
+        };
+      }
+    } catch {
+      // ignore
     }
     return INITIAL_USER_STATS;
   });
 
   const [pickups, setPickups] = useState<PickupRequest[]>(() => {
-    const saved = localStorage.getItem('ecobottle_pickups');
-    return saved ? JSON.parse(saved) : INITIAL_PICKUPS;
+    try {
+      const saved = localStorage.getItem('ecobottle_pickups');
+      return saved ? JSON.parse(saved) : INITIAL_PICKUPS;
+    } catch {
+      return INITIAL_PICKUPS;
+    }
   });
 
   const [refills, setRefills] = useState<RefillOrder[]>(() => {
-    const saved = localStorage.getItem('ecobottle_refills');
-    return saved ? JSON.parse(saved) : INITIAL_REFILLS;
+    try {
+      const saved = localStorage.getItem('ecobottle_refills');
+      return saved ? JSON.parse(saved) : INITIAL_REFILLS;
+    } catch {
+      return INITIAL_REFILLS;
+    }
   });
 
   const [pointHistory, setPointHistory] = useState<PointHistoryItem[]>(() => {
-    const saved = localStorage.getItem('ecobottle_points_history');
-    return saved ? JSON.parse(saved) : INITIAL_POINT_HISTORY;
+    try {
+      const saved = localStorage.getItem('ecobottle_points_history');
+      return saved ? JSON.parse(saved) : INITIAL_POINT_HISTORY;
+    } catch {
+      return INITIAL_POINT_HISTORY;
+    }
   });
 
   // Modals active targets
@@ -218,7 +238,7 @@ export default function App() {
       particleCount: 90,
       spread: 70,
       origin: { y: 0.6 },
-      colors: ['#10b981', '#14b8a6', '#f59e0b', '#3b82f6'],
+      colors: ['#EAF854', '#121214', '#ffffff', '#2A2A2E'],
     });
   };
 
@@ -251,10 +271,6 @@ export default function App() {
     setBenefitChoiceBottle(bottle);
   };
 
-  const handleOpenDirectPickupModal = (bottle: CosmeticBottle) => {
-    setPickupModalBottle(bottle);
-  };
-
   const handleSubmitPickup = (
     requestData: Omit<PickupRequest, 'id' | 'createdAt' | 'status' | 'pointsCredited' | 'trackingNumber'>
   ) => {
@@ -270,17 +286,18 @@ export default function App() {
     setPickups([newPickup, ...pickups]);
     setPickupModalBottle(null);
 
+    const totalPts = requestData.totalPoints ?? 0;
+
     if (requestData.benefitType === 'free_refill') {
       setToastInfo({
-        message: `${requestData.bottle.name} 공병 내용물 무료 충전 리필 신청이 접수되었습니다! (비용 0원)`,
+        message: `${requestData.bottle?.name || '공병'} 30% 할인가 리필 신청 접수 완료!`,
       });
     } else {
       setToastInfo({
-        message: `${requestData.bottle.name} 공병 회수 신청이 접수되었습니다! (+${requestData.totalPoints.toLocaleString()}P 적립 대기)`,
+        message: `${requestData.bottle?.name || '공병'} 공병 회수 신청 접수 완료! (+${totalPts.toLocaleString()}P 대기)`,
       });
     }
 
-    // Switch to activity tab to show progress
     setActivityInitialTab('pickups');
     setShowActivityModal(true);
   };
@@ -301,8 +318,7 @@ export default function App() {
       trackingNumber: `REFILL-${Date.now().toString().slice(-8)}`,
     };
 
-    // Update user points if points used
-    let currentPts = userStats.points;
+    let currentPts = userStats?.points ?? 0;
     const newHistories: PointHistoryItem[] = [...pointHistory];
 
     if (orderData.pointsUsed > 0) {
@@ -314,11 +330,10 @@ export default function App() {
         type: 'use',
         amount: orderData.pointsUsed,
         balanceAfter: currentPts,
-        detail: `${orderData.bottle.name} 리필팩 주문 결제`,
+        detail: `${orderData.bottle?.name || '화장품'} 리필팩 주문 결제`,
       });
     }
 
-    // Add earned reward points for refill purchase
     currentPts += orderData.earnedPoints;
     newHistories.unshift({
       id: `pt-earn-${Date.now()}`,
@@ -327,7 +342,7 @@ export default function App() {
       type: 'earn',
       amount: orderData.earnedPoints,
       balanceAfter: currentPts,
-      detail: `${orderData.bottle.brand} 리필팩 신청 보너스`,
+      detail: `${orderData.bottle?.brand || '브랜드'} 리필팩 신청 보너스`,
     });
 
     setUserStats({
@@ -349,32 +364,30 @@ export default function App() {
     setShowActivityModal(true);
   };
 
-  // 4. CRITICAL: Confirm Pickup and Deposit Points into User Account with Tier Bonus Rate!
+  // 4. Confirm Pickup and Deposit Points
   const handleConfirmPickupAndCreditPoints = (pickupId: string) => {
     const target = pickups.find((p) => p.id === pickupId);
     if (!target || target.pointsCredited) return;
 
     const addedBottles = target.quantity + (target.extraBottlesCount || 0);
-    const newRecycledCount = userStats.totalBottlesRecycled + addedBottles;
+    const newRecycledCount = (userStats?.totalBottlesRecycled ?? 0) + addedBottles;
     
-    // Determine updated tier
     const tierDetails = getUserTierDetails(newRecycledCount);
     const { currentTier } = tierDetails;
 
-    const newCo2 = userStats.co2SavedKg + addedBottles * 0.45;
-    const newPlastic = userStats.plasticGlassSavedKg + addedBottles * 0.25;
-    const newTrees = userStats.treesSaved + addedBottles * 0.12;
+    const newCo2 = (userStats?.co2SavedKg ?? 0) + addedBottles * 0.45;
+    const newPlastic = (userStats?.plasticGlassSavedKg ?? 0) + addedBottles * 0.25;
+    const newTrees = (userStats?.treesSaved ?? 0) + addedBottles * 0.12;
 
     if (target.benefitType === 'free_refill') {
-      // 30% Discount Refill: Delivery completed + 10% Points reward ("리필해서 받는거가 10% 포인트+정가에서 30%할인된 가격")
       const base10PercentPoints = target.totalPoints > 0 
         ? target.totalPoints 
-        : Math.round(target.bottle.pickupPoints * 0.10) * target.quantity;
+        : Math.round((target.bottle?.pickupPoints ?? 0) * 0.10) * target.quantity;
       
-      const tierBonusRate = currentTier.bonusRatePercent;
+      const tierBonusRate = currentTier.bonusRatePercent ?? 0;
       const tierBonusPoints = Math.round(base10PercentPoints * (tierBonusRate / 100));
       const totalEarnedPoints = base10PercentPoints + tierBonusPoints;
-      const newTotalPoints = userStats.points + totalEarnedPoints;
+      const newTotalPoints = (userStats?.points ?? 0) + totalEarnedPoints;
 
       setPickups(
         pickups.map((p) =>
@@ -396,7 +409,6 @@ export default function App() {
         bonusRatePercent: currentTier.bonusRatePercent,
       });
 
-      // Add to points history
       setPointHistory([
         {
           id: `pt-${Date.now()}`,
@@ -405,29 +417,27 @@ export default function App() {
           type: 'earn',
           amount: totalEarnedPoints,
           balanceAfter: newTotalPoints,
-          detail: `${target.bottle.name} (${target.quantity}개) 30% 할인가 리필 완충 및 10% 적립 (기본 ${base10PercentPoints.toLocaleString()}P + 등급보너스 ${tierBonusPoints.toLocaleString()}P)`,
+          detail: `${target.bottle?.name || '공병'} (${target.quantity}개) 30% 할인가 리필 완충 및 10% 적립`,
         },
         ...pointHistory,
       ]);
 
       triggerConfetti();
       setToastInfo({
-        message: `${target.bottle.name} 정품 30% 할인가 리필 완충품 발송 및 10% 보너스 포인트(+${totalEarnedPoints.toLocaleString()}P)가 적립되었습니다!`,
+        message: `${target.bottle?.name || '공병'} 30% 할인가 리필 발송 및 10% 보너스 포인트(+${totalEarnedPoints.toLocaleString()}P)가 적립되었습니다!`,
         points: totalEarnedPoints,
       });
     } else {
-      // 100% Full Points Calculation + Tier Bonus ("포인트만 받는 거는 그에 맞는 포인트를 지급")
       const baseFullPoints = target.totalPoints > 0 
         ? target.totalPoints 
-        : target.bottle.pickupPoints * target.quantity + (target.extraBottlesCount ? target.extraBottlesCount * 500 : 0);
+        : (target.bottle?.pickupPoints ?? 0) * target.quantity + (target.extraBottlesCount ? target.extraBottlesCount * 500 : 0);
       
-      const tierBonusRate = currentTier.bonusRatePercent;
+      const tierBonusRate = currentTier.bonusRatePercent ?? 0;
       const tierBonusPoints = Math.round(baseFullPoints * (tierBonusRate / 100));
       const totalEarnedPoints = baseFullPoints + tierBonusPoints;
 
-      const newTotalPoints = userStats.points + totalEarnedPoints;
+      const newTotalPoints = (userStats?.points ?? 0) + totalEarnedPoints;
 
-      // Update pickups list
       setPickups(
         pickups.map((p) =>
           p.id === pickupId
@@ -436,7 +446,6 @@ export default function App() {
         )
       );
 
-      // Update user stats
       setUserStats({
         ...userStats,
         points: newTotalPoints,
@@ -449,7 +458,6 @@ export default function App() {
         bonusRatePercent: currentTier.bonusRatePercent,
       });
 
-      // Add to points history
       setPointHistory([
         {
           id: `pt-${Date.now()}`,
@@ -458,20 +466,20 @@ export default function App() {
           type: 'earn',
           amount: totalEarnedPoints,
           balanceAfter: newTotalPoints,
-          detail: `${target.bottle.name} (${target.quantity}개) 회수 검수 완료 (100% 전액 기본 ${baseFullPoints.toLocaleString()}P + 등급보너스 ${tierBonusPoints.toLocaleString()}P)`,
+          detail: `${target.bottle?.name || '공병'} (${target.quantity}개) 회수 검수 완료 (100% 전액 적립)`,
         },
         ...pointHistory,
       ]);
 
       triggerConfetti();
       setToastInfo({
-        message: `공병 회수 검수 완료! 공병 맞춤 100% 포인트 및 ${currentTier.name} 등급 보너스 포함 +${totalEarnedPoints.toLocaleString()}P가 적립되었습니다!`,
+        message: `공병 회수 검수 완료! 100% 전액 포인트 +${totalEarnedPoints.toLocaleString()}P가 계정으로 입금되었습니다!`,
         points: totalEarnedPoints,
       });
     }
   };
 
-  // 5. Step Progression for testing
+  // 5. Step Progression
   const handleAdvancePickupStep = (pickupId: string) => {
     setPickups(
       pickups.map((p) => {
@@ -495,7 +503,7 @@ export default function App() {
     pointsUsed: number,
     paidCash: number
   ) => {
-    let currentPts = userStats.points - pointsUsed;
+    let currentPts = (userStats?.points ?? 0) - pointsUsed;
     const newHistories: PointHistoryItem[] = [...pointHistory];
 
     if (pointsUsed > 0) {
@@ -510,13 +518,13 @@ export default function App() {
       });
     }
 
-    currentPts += product.pointsRewarded * quantity;
+    currentPts += (product.pointsRewarded ?? 0) * quantity;
     newHistories.unshift({
       id: `pt-shop-reward-${Date.now()}`,
       date: new Date().toLocaleDateString('ko-KR') + ' ' + new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
       title: '에코 마켓 구매 적립금',
       type: 'earn',
-      amount: product.pointsRewarded * quantity,
+      amount: (product.pointsRewarded ?? 0) * quantity,
       balanceAfter: currentPts,
       detail: `${product.name} 구매 보너스 적립`,
     });
@@ -530,7 +538,7 @@ export default function App() {
     triggerConfetti();
     setToastInfo({
       message: `${product.name} 특가 주문이 완료되었습니다!`,
-      points: product.pointsRewarded * quantity,
+      points: (product.pointsRewarded ?? 0) * quantity,
     });
   };
 
@@ -541,11 +549,10 @@ export default function App() {
     setPickupModalBottle(newBottle);
   };
 
-  // Count active pending pickups
   const pendingPickupsCount = pickups.filter((p) => !p.pointsCredited).length;
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-emerald-200 selection:text-emerald-900">
+    <div className="min-h-screen bg-[#F8F8F6] text-[#121214] flex flex-col font-sans selection:bg-[#EAF854] selection:text-[#121214]">
       
       {/* 1. Global Navigation Header */}
       <Header
@@ -559,7 +566,7 @@ export default function App() {
         onOpenTierModal={() => setShowTierModal(true)}
         onOpenCustomBottle={() => setShowCustomBottleModal(true)}
         onQuickAddBonusPoints={() => {
-          const newPts = userStats.points + 1000;
+          const newPts = (userStats?.points ?? 0) + 1000;
           setUserStats({ ...userStats, points: newPts });
           setPointHistory([
             {
@@ -613,12 +620,12 @@ export default function App() {
             />
 
             {/* Quick Summary Strip */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs">
-              <div className="flex items-center gap-2 text-sm text-slate-700">
-                <span className="font-bold text-slate-900">검색 결과:</span>
-                <span className="font-extrabold text-emerald-700">{filteredBottles.length}개</span>
-                <span className="text-slate-400 text-xs">
-                  (공병마다 회수 포인트와 리필팩 가격이 차등 적용됩니다)
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-3xl border border-[#E5E5E0] shadow-2xs font-mono-code">
+              <div className="flex items-center gap-2 text-xs text-[#737378]">
+                <span className="font-bold text-[#121214]">TOTAL RESULTS:</span>
+                <span className="font-extrabold text-[#121214] bg-[#EAF854] px-2 py-0.5 rounded-full">{filteredBottles.length} ITEMS</span>
+                <span className="text-[11px] hidden sm:inline text-[#88888D]">
+                  (소재 및 브랜드별 포인트 / 리필가 자동 적용)
                 </span>
               </div>
 
@@ -628,10 +635,10 @@ export default function App() {
                     setActivityInitialTab('pickups');
                     setShowActivityModal(true);
                   }}
-                  className="text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-xl border border-emerald-200 flex items-center gap-1.5 transition-colors self-start sm:self-auto cursor-pointer"
+                  className="text-xs font-bold text-[#121214] bg-[#F0F0EB] hover:bg-[#E5E5E0] px-4 py-2 rounded-full border border-[#E5E5E0] flex items-center gap-2 transition-colors self-start sm:self-auto cursor-pointer"
                 >
-                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                  <span>현재 진행 중인 공병 회수 {pendingPickupsCount}건 확인하기</span>
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>진행 중인 회수 {pendingPickupsCount}건 조회</span>
                   <ArrowRight className="w-3 h-3" />
                 </button>
               )}
@@ -650,45 +657,46 @@ export default function App() {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-16 bg-white rounded-3xl border border-slate-200 p-8 space-y-4">
-                <Leaf className="w-12 h-12 text-slate-300 mx-auto" />
-                <h3 className="text-lg font-bold text-slate-800">
+              <div className="text-center py-16 bg-white rounded-3xl border border-[#E5E5E0] p-8 space-y-4">
+                <Leaf className="w-12 h-12 text-[#A0A0A5] mx-auto" />
+                <h3 className="text-lg font-bold text-[#121214] font-display">
                   '{searchQuery}'에 해당하는 공병을 찾지 못했습니다.
                 </h3>
-                <p className="text-xs text-slate-500 max-w-md mx-auto">
+                <p className="text-xs text-[#737378] max-w-md mx-auto">
                   에코보틀에 아직 등록되지 않은 화장품이라도 직접 등록하여 무료 수거 및 포인트를 받으실 수 있습니다.
                 </p>
                 <button
                   onClick={() => setShowCustomBottleModal(true)}
-                  className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition-all inline-flex items-center gap-2 cursor-pointer"
+                  className="px-6 py-3.5 bg-[#121214] hover:bg-[#2A2A2E] text-white font-mono-code font-bold text-xs rounded-full shadow-md transition-all inline-flex items-center gap-2 cursor-pointer"
                 >
-                  <Sparkles className="w-4 h-4" />
-                  <span>미등록 공병 직접 등록 및 수거 신청</span>
+                  <Sparkles className="w-4 h-4 text-[#EAF854]" />
+                  <span>REGISTER UNLISTED BOTTLE</span>
                 </button>
               </div>
             )}
 
             {/* Bottom Info Banner */}
-            <div className="p-6 rounded-3xl bg-gradient-to-r from-emerald-900 to-teal-950 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-lg">
-              <div className="space-y-1 text-center md:text-left">
-                <div className="text-xs text-emerald-300 font-bold flex items-center justify-center md:justify-start gap-1">
+            <div className="p-8 sm:p-10 rounded-3xl bg-[#121214] text-[#F8F8F6] flex flex-col md:flex-row items-center justify-between gap-6 border border-black/10 shadow-2xl">
+              <div className="space-y-2 text-center md:text-left">
+                <div className="text-xs font-mono-code text-[#EAF854] font-bold flex items-center justify-center md:justify-start gap-1.5 uppercase">
                   <ShieldCheck className="w-4 h-4" />
-                  <span>안심 에코 프로세스</span>
+                  <span>CLOSED-LOOP RECYCLING SYSTEM</span>
                 </div>
-                <h4 className="text-lg font-black">
+                <h4 className="text-lg sm:text-xl font-extrabold font-display">
                   회수된 공병은 100% 전문 업사이클링 센터에서 새 용기로 재탄생합니다.
                 </h4>
-                <p className="text-xs text-slate-300">
+                <p className="text-xs text-[#A0A0A5]">
                   문 앞에 놓아두시면 비대면 수거 기사님이 방문 수거 후 검수 즉시 계정으로 포인트가 입금됩니다.
                 </p>
               </div>
 
               <button
                 onClick={() => setActiveTab('shop')}
-                className="px-6 py-3 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-black text-sm rounded-xl shadow-md shrink-0 flex items-center gap-2 transition-all cursor-pointer"
+                className="px-7 py-4 bg-[#EAF854] hover:bg-[#D8E645] text-[#121214] font-mono-code font-extrabold text-xs rounded-full shadow-md shrink-0 flex items-center gap-2 transition-all cursor-pointer"
               >
-                <ShoppingBag className="w-4 h-4" />
-                <span>적립된 포인트로 특가 쇼핑하기</span>
+                <ShoppingBag className="w-4 h-4 text-[#121214]" />
+                <span>SHOP WITH POINTS</span>
+                <ArrowRight className="w-4 h-4 text-[#121214]" />
               </button>
             </div>
 
@@ -709,21 +717,21 @@ export default function App() {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-black text-slate-900">내 신청 & 배송 내역</h2>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  공병 수거 진행 상태 확인 및 리필팩 배송 현황
+                <h2 className="text-2xl font-extrabold text-[#121214] font-display">내 신청 & 배송 내역</h2>
+                <p className="text-xs font-mono-code text-[#737378] mt-0.5">
+                  REAL-TIME PICKUP & REFILL STATUS
                 </p>
               </div>
               <button
                 onClick={() => setActiveTab('search')}
-                className="px-4 py-2 text-xs font-bold bg-emerald-600 text-white rounded-xl shadow-xs cursor-pointer"
+                className="px-5 py-2.5 text-xs font-mono-code font-bold bg-[#121214] text-white rounded-full shadow-2xs hover:bg-[#2A2A2E] cursor-pointer"
               >
-                + 새 공병 수거 신청하기
+                + NEW PICKUP
               </button>
             </div>
 
             {/* Render Activity directly inline */}
-            <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs">
+            <div className="bg-white rounded-3xl border border-[#E5E5E0] p-6 shadow-2xs">
               <MyActivityModal
                 initialTab={activityInitialTab}
                 onClose={() => setActiveTab('search')}
@@ -747,30 +755,30 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer className="mt-16 bg-white border-t border-slate-200 py-10 text-slate-500 text-xs">
+      <footer className="mt-16 bg-[#121214] text-[#F8F8F6] border-t border-black/10 py-12 text-xs font-mono-code">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4 text-center sm:text-left sm:flex sm:items-center sm:justify-between">
-          <div className="space-y-1">
-            <div className="flex items-center justify-center sm:justify-start gap-2 font-black text-slate-800 text-sm">
-              <Leaf className="w-4 h-4 text-emerald-600" />
-              <span>에코보틀 (EcoBottle)</span>
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-center sm:justify-start gap-2 font-bold text-white text-sm">
+              <Leaf className="w-4 h-4 text-[#EAF854]" />
+              <span>ECOBOTTLE ARCHIVE</span>
             </div>
-            <p className="text-[11px] text-slate-400">
-              화장품 공병 비대면 회수 & 포인트 지급 • 친환경 리필팩 맞춤 배송 • 제로웨이스트 에코 마켓
+            <p className="text-[11px] text-[#737378]">
+              화장품 공병 비대면 회수 & 포인트 환급 • 친환경 리필팩 맞춤 배송 • 제로웨이스트 마켓
             </p>
           </div>
 
-          <div className="text-[11px] text-slate-400 flex items-center justify-center gap-4">
-            <span>개인정보처리방침</span>
+          <div className="text-[11px] text-[#737378] flex items-center justify-center gap-4">
+            <span className="hover:text-white cursor-pointer transition-colors">PRIVACY POLICY</span>
             <span>•</span>
-            <span>이용약관</span>
+            <span className="hover:text-white cursor-pointer transition-colors">TERMS OF USE</span>
             <span>•</span>
-            <span>수거파트너 문의</span>
+            <span className="hover:text-white cursor-pointer transition-colors">PARTNER INQUIRY</span>
           </div>
         </div>
       </footer>
 
       {/* MODALS */}
-      {/* 0. Benefit Choice Modal (Choose between 15% Points or Free Product Refill) */}
+      {/* 0. Benefit Choice Modal */}
       {benefitChoiceBottle && (
         <BenefitChoiceModal
           bottle={benefitChoiceBottle}
@@ -803,7 +811,7 @@ export default function App() {
       {refillModalBottle && (
         <RefillModal
           bottle={refillModalBottle}
-          userPoints={userStats.points}
+          userPoints={userStats?.points ?? 0}
           onClose={() => setRefillModalBottle(null)}
           onSubmit={handleSubmitRefill}
         />
@@ -856,4 +864,3 @@ export default function App() {
     </div>
   );
 }
-

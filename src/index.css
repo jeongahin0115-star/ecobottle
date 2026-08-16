@@ -1,5 +1,19 @@
 @import "tailwindcss";
 
+@layer base {
+  body {
+    font-family: "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+  }
+}
+
+.font-display {
+  font-family: "Plus Jakarta Sans", "Pretendard", sans-serif;
+}
+
+.font-mono-code {
+  font-family: "Space Mono", monospace, "Pretendard";
+}
+
 @layer utilities {
   .scrollbar-none {
     -ms-overflow-style: none;
@@ -37,4 +51,3 @@
 .animate-spin-slow {
   animation: spinSlow 8s linear infinite;
 }
-
