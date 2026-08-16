@@ -1,0 +1,6 @@
+{
+  "name": "에코보틀 (EcoBottle)",
+  "description": "화장품 공병 검색, 수거 회수 신청 및 포인트 적립, 친환경 리필팩 배송 및 포인트 특가 에코 마켓 플랫폼",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
